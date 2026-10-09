@@ -1,0 +1,2 @@
+# Optional: only for scripts/benchmark_pandas_vs_spark.py (also needs Java 8/11/17 installed)
+pyspark>=3.5
