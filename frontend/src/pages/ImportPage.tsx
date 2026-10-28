@@ -8,6 +8,7 @@ const LABELS: Record<string, string> = { exact_duplicates_removed: "Exact duplic
   cancellation_rows_kept_flagged: "Cancellation rows (kept, flagged)", unparseable_rows_removed: "Unparseable rows removed" };
 
 export default function ImportPage() {
+  const source = useApi<any>("/api/data-source");
   const { data, loading, error, reload } = useApi<any>("/api/import/latest");
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<string | null>(null);
   const upload = async (f: File) => {
@@ -22,8 +23,23 @@ export default function ImportPage() {
     } catch (e) { setBusy(false); setMsg(errMsg(e)); }
   };
   const r = data?.run?.result;
+  if (source.loading) return <Loading />;
+  if (source.error) return <ErrorBox msg={source.error} retry={source.reload} />;
+  if (source.data?.source === "olist") return (
+    <Page title="Olist data" sub="Olist CSV files are imported into the dedicated PostgreSQL tables through pgAdmin.">
+      <Card title="Loaded Olist dataset">
+        <p className="text-sm text-slate-600 mb-4">{source.data.label} · Currency: BRL · {String(source.data.date_min).slice(0, 10)} to {String(source.data.date_max).slice(0, 10)}</p>
+        <div className="grid sm:grid-cols-3 gap-3 text-sm">
+          {[["Customers", source.data.customers], ["Orders", source.data.orders], ["Products", source.data.products]].map(([label, value]) =>
+            <div key={label as string} className="border rounded p-3"><div className="text-slate-500">{label}</div><div className="text-xl font-semibold">{num(value as number)}</div></div>)}
+        </div>
+      </Card>
+      {source.data.analytics_ready ? <Empty>Olist data is ready for the dashboard and analytics. Select an analysis page and run its analysis.</Empty> :
+        <ErrorBox msg="The compatibility views for the existing analytics are not installed yet. Run Databas_Olist/03_enable_project_analytics.sql in pgAdmin after loading the nine CSV files, then restart the backend." retry={source.reload} />}
+    </Page>
+  );
   return (
-    <Page title="Data import & quality" sub="Upload the UCI Online Retail file (.xlsx or .csv). Importing replaces all existing data and any derived analysis results. The original GBP currency is preserved.">
+    <Page title="Data import & quality" sub="Upload the UCI Online Retail file (.xlsx or .csv). Importing replaces existing UCI data and derived analysis results.">
       <Card title="Upload dataset">
         <input type="file" accept=".csv,.xlsx,.xls" disabled={busy} aria-label="Dataset file" onChange={e => e.target.files?.[0] && upload(e.target.files[0])} />
         {busy && <p className="text-sm mt-2 animate-pulse" role="status">Cleaning and loading… the full 541k-row file can take a few minutes.</p>}

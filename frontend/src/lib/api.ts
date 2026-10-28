@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 
-export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8000" });
+export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000" });
 
 export function errMsg(e: any): string {
   if (e?.response?.data?.detail) {
@@ -25,6 +25,8 @@ export function useApi<T>(url: string, params?: Record<string, any>) {
   return { data, loading, error, reload: load };
 }
 
-export const gbp = (n: number | null | undefined) => n == null ? "–" : "£" + Number(n).toLocaleString("en-GB", { maximumFractionDigits: 0 });
+export const money = (n: number | null | undefined, currency = "GBP") => n == null ? "–" :
+  new Intl.NumberFormat(currency === "BRL" ? "pt-BR" : "en-GB", { style: "currency", currency, maximumFractionDigits: currency === "BRL" ? 2 : 0 }).format(Number(n));
+export const gbp = (n: number | null | undefined) => money(n, "GBP");
 export const num = (n: number | null | undefined, d = 0) => n == null ? "–" : Number(n).toLocaleString("en-GB", { maximumFractionDigits: d });
 export const pct = (n: number | null | undefined) => n == null ? "–" : (n * 100).toFixed(1) + "%";

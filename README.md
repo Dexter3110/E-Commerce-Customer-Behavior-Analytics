@@ -53,7 +53,11 @@ Tables: `customers`, `products`, `orders`, `order_items`, `analytics_runs`, `cus
 
 **Expensive work is never done per request.** `POST /api/runs` stores a run (`pending`), a background task executes it (`running` → `completed`/`failed`) and writes results to PostgreSQL; the UI polls the run and then reads the stored results.
 
-Main endpoints: `GET /api/dashboard/{summary,trends,top-products,countries}`, `GET /api/customers`, `GET /api/rfm/summary`, `GET /api/clusters/latest`, `GET /api/association-rules`, `GET /api/forecast/latest`, `POST /api/runs`, `GET /api/runs[/id]`, `POST /api/import`, `GET /api/import/latest`.
+**Personalized recommendations.** The Recommendations page finds customers with similar delivered-product histories, scores products they have not bought using Jaccard similarity, and falls back to popular products when no similar-customer candidates exist. It supports the current UCI schema and the Olist schema in `Databas_Olist`; the Olist database must be loaded and selected in `backend/.env` to use Olist customers. Olist's public catalog contains product IDs and categories rather than product names, so recommendations display those fields.
+
+**Olist support for analytics.** After importing all Olist CSVs, run `Databas_Olist/03_enable_project_analytics.sql` in pgAdmin. It creates read-only views that adapt Olist customers, products, orders and items to the existing analytics query shape, plus tables for saved analysis runs. The app detects Olist and displays amounts in BRL. The UCI workbook importer remains UCI-specific; Olist data is imported into its source tables with pgAdmin.
+
+Main endpoints: `GET /api/dashboard/{summary,trends,top-products,countries}`, `GET /api/customers`, `GET /api/recommendations/customers`, `GET /api/recommendations/{customer_id}`, `GET /api/rfm/summary`, `GET /api/clusters/latest`, `GET /api/association-rules`, `GET /api/forecast/latest`, `POST /api/runs`, `GET /api/runs[/id]`, `POST /api/import`, `GET /api/import/latest`.
 
 ## Preprocessing decisions (all counted in the data-quality report)
 

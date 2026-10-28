@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { gbp, num, useApi } from "../lib/api";
+import { money, num, useApi } from "../lib/api";
 import { Card, Col, Empty, ErrorBox, Input, Loading, PALETTE, Page, Pager, RunPanel, Table } from "../lib/ui";
 
 const SEGMENTS = ["Champions", "Loyal Customers", "Potential Loyalists", "New Customers", "Need Attention", "About to Sleep", "At Risk", "Can't Lose Them", "Hibernating"];
@@ -13,7 +13,7 @@ export default function Customers() {
   const cols: Col<any>[] = [
     { key: "customer_id", label: "Customer", sort: "customer_id" }, { key: "country", label: "Country" },
     { key: "order_count", label: "Orders", sort: "order_count", right: true },
-    { key: "total_spent", label: "Spent", sort: "total_spent", right: true, render: r => gbp(r.total_spent) },
+    { key: "total_spent", label: "Spent", sort: "total_spent", right: true, render: r => money(r.total_spent, list.data?.currency) },
     { key: "recency", label: "Recency (d)", sort: "recency", right: true, render: r => num(r.recency) },
     { key: "rfm", label: "R-F-M", render: r => r.r_score ? `${r.r_score}-${r.f_score}-${r.m_score}` : "–" },
     { key: "segment", label: "Segment", render: r => r.segment ?? "–" },
@@ -21,14 +21,14 @@ export default function Customers() {
   const reload = () => { rfm.reload(); list.reload(); };
   const segs = rfm.data?.run?.result?.segments ?? [];
   return (
-    <Page title="Customers & RFM" sub="Recency (days since last order), Frequency (distinct orders) and Monetary (GBP) are scored 1–5 by quintile and mapped to named segments. Guest checkouts without a CustomerID are excluded.">
+    <Page title="Customers & RFM" sub={`Recency (days since last order), Frequency (distinct orders) and Monetary (${list.data?.currency ?? rfm.data?.currency ?? "GBP"}) are scored 1-5 by quintile and mapped to named segments. Customers without a delivered purchase are excluded.`}>
       <Card title="Scoring"><RunPanel runType="rfm" label="Run RFM analysis" onDone={reload} /></Card>
       {rfm.error ? <ErrorBox msg={rfm.error} retry={rfm.reload} /> : segs.length === 0 ? <Empty>No RFM run yet. Import data, then run the analysis.</Empty> :
-        <Card title="Customers per segment"><div className="h-64"><ResponsiveContainer><BarChart data={segs}><CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+      <Card title="Customers per segment"><div className="h-64"><ResponsiveContainer><BarChart data={segs}><CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
           <XAxis dataKey="segment" fontSize={11} interval={0} angle={-20} textAnchor="end" height={60} /><YAxis fontSize={12} /><Tooltip />
           <Bar dataKey="customers">{segs.map((_: any, i: number) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}</Bar></BarChart></ResponsiveContainer></div>
           <Table cols={[{ key: "segment", label: "Segment" }, { key: "customers", label: "Customers", right: true }, { key: "avg_recency", label: "Avg recency (d)", right: true },
-            { key: "avg_frequency", label: "Avg orders", right: true }, { key: "revenue", label: "Revenue", right: true, render: (r: any) => gbp(r.revenue) }]} rows={segs} /></Card>}
+            { key: "avg_frequency", label: "Avg orders", right: true }, { key: "revenue", label: "Revenue", right: true, render: (r: any) => money(r.revenue, rfm.data?.currency) }]} rows={segs} /></Card>}
       <Card title="Customer records" right={<div className="flex gap-2">
         <Input placeholder="Search customer ID" aria-label="Search customer ID" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         <select aria-label="Segment filter" className="border rounded px-2 text-sm" value={segment} onChange={e => { setSegment(e.target.value); setPage(1); }}>

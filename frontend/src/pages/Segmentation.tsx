@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
-import { gbp, useApi } from "../lib/api";
+import { money, useApi } from "../lib/api";
 import { Card, Empty, ErrorBox, Input, Loading, PALETTE, Page, RunPanel, Table } from "../lib/ui";
 
 export default function Segmentation() {
@@ -21,7 +21,7 @@ export default function Segmentation() {
               <Tooltip /><Legend />{ks.sort().map(c => <Scatter key={c} name={`Cluster ${c}`} data={res.points.filter((p: any) => p.cluster === c)} fill={PALETTE[c % PALETTE.length]} />)}</ScatterChart></ResponsiveContainer></div></Card>
         </div>
         <Card title="Cluster profiles (means)"><Table rows={res.profiles} cols={[{ key: "cluster", label: "Cluster" }, { key: "size", label: "Customers", right: true },
-          { key: "recency", label: "Recency (d)", right: true }, { key: "frequency", label: "Orders", right: true }, { key: "monetary", label: "Monetary", right: true, render: (r: any) => gbp(r.monetary) }]} /></Card></>}
+          { key: "recency", label: "Recency (d)", right: true }, { key: "frequency", label: "Orders", right: true }, { key: "monetary", label: "Monetary", right: true, render: (r: any) => money(r.monetary, data?.currency) }]} /></Card></>}
     </Page>
   );
 }
